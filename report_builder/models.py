@@ -237,36 +237,35 @@ class Report(models.Model):
                     val = reduce(getattr, relations, obj)
                     display_property_values.append(val)
 
-                value_row = values_list[values_index]
-                while value_row[0] == obj.pk:
-                    add_row = True
-                    data_row = list(value_row[1:])  # Remove added pk
-                    # Insert in the location dictated by the order of display fields
-                    for i, prop_value in enumerate(display_property_values):
-                        data_row.insert(insert_property_indexes[i], prop_value)
-                    for property_filter in property_filters:
-                        relations = property_filter.field_key.split('__')
-                        val = reduce(getattr, relations, obj)
-                        if property_filter.filter_property(val):
-                            add_row = False
+                if preview:
+                    values_list = values_list[:50]
+                # try to find the value_row
+                for value_row in values_list:
+                    if value_row[0] == obj.pk:
+                        add_row = True
+                        data_row = list(value_row[1:])  # Remove added pk
+                        # Insert in the location dictated by the order of display fields
+                        for i, prop_value in enumerate(display_property_values):
+                            data_row.insert(insert_property_indexes[i], prop_value)
+                        for property_filter in property_filters:
+                            relations = property_filter.field_key.split('__')
+                            val = reduce(getattr, relations, obj)
+                            if property_filter.filter_property(val):
+                                add_row = False
 
-                    if add_row is True:
-                        for total in display_totals:
-                            increment_total(total, data_row)
-                        # Replace choice data with display choice string
-                        for position, choice_list in choice_lists.items():
-                            try:
-                                data_row[position] = text_type(choice_list[data_row[position]])
-                            except Exception:
-                                data_row[position] = text_type(data_row[position])
-                        for position, style in display_formats.items():
-                            data_row[position] = formatter(data_row[position], style)
-                        data_list.append(data_row)
-                    values_index += 1
-                    try:
-                        value_row = values_list[values_index]
-                    except IndexError:
-                        break
+                        if add_row is True:
+                            for total in display_totals:
+                                increment_total(total, data_row)
+                            # Replace choice data with display choice string
+                            for position, choice_list in choice_lists.items():
+                                try:
+                                    data_row[position] = text_type(choice_list[data_row[position]])
+                                except Exception:
+                                    data_row[position] = text_type(data_row[position])
+                            for position, style in display_formats.items():
+                                data_row[position] = formatter(data_row[position], style)
+                            data_list.append(data_row)
+                        values_index += 1
 
         for display_field in display_fields.filter(
             sort__gt=0
