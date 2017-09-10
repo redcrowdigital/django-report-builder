@@ -98,7 +98,7 @@ class DataExportMixin(object):
         sh = wb.active
         c = csv.writer(myfile)
         for r in sh.rows:
-            c.writerow([cell.value for cell in r])
+            c.writerow([unicode(cell.value).encode("utf-8") for cell in r])
         response = HttpResponse(
             myfile.getvalue(),
             content_type='text/csv')
