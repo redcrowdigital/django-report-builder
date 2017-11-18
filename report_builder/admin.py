@@ -69,7 +69,7 @@ class ReportAdmin(admin.ModelAdmin):
         return super(ReportAdmin, self).response_change(request, obj)
 
     def change_view(self, request, object_id, extra_context=None):
-        if getattr(settings, 'REPORT_BUILDER_ASYNC_REPORT', False) and 'report_file' not in self.fields:
+        if getattr(settings, 'REPORT_BUILDER_ASYNC_REPORT', False) and self.fields and 'report_file' not in self.fields:
             self.fields += ['report_file', 'report_file_creation']
         return super(ReportAdmin, self).change_view(request, object_id, extra_context=None)
 
