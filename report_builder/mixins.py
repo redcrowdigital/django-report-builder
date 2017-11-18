@@ -1,6 +1,6 @@
 from six import BytesIO, StringIO, text_type, string_types
 
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib.contenttypes.models import ContentType
 try:
     from django.db.models.fields.related_descriptors import ManyToManyDescriptor
@@ -44,6 +44,15 @@ def generate_filename(title, ends_with):
     if not title.endswith(ends_with):
         title += ends_with
     return title
+
+
+class Echo(object):
+    """An object that implements just the write method of the file-like
+    interface.
+    """
+    def write(self, value):
+        """Write the value by returning it, instead of storing in a buffer."""
+        return value
 
 
 class DataExportMixin(object):
@@ -96,14 +105,18 @@ class DataExportMixin(object):
         title = generate_filename(title, '.csv')
         myfile = StringIO()
         sh = wb.active
-        c = csv.writer(myfile)
-        for r in sh.rows:
-            c.writerow([unicode(cell.value).encode("utf-8") for cell in r])
-        response = HttpResponse(
-            myfile.getvalue(),
-            content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=%s' % title
-        response['Content-Length'] = myfile.tell()
+
+        def yield_data(sh):
+            for row in sh.rows:
+                yield [unicode(cell.value).encode("utf-8") for cell in row]
+
+        pseudo_buffer = Echo()
+        writer = csv.writer(pseudo_buffer, delimiter='\t', quotechar='"')
+        response = StreamingHttpResponse(
+            (writer.writerow(row) for row in yield_data(sh)),
+            content_type='text/csv'
+        )
+        response['Content-Disposition'] = 'attachment; filename="%s"' % title
         return response
 
     def list_to_workbook(self, data, title='report', header=None, widths=None):
