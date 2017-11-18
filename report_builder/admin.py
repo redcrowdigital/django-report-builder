@@ -3,10 +3,22 @@ from django.contrib.admin import SimpleListFilter
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from report_builder.models import Report, Format
+from report_builder.models import Report, Format, DisplayField, FilterField
 from django.conf import settings
 
 static_url = getattr(settings, 'STATIC_URL', '/static/')
+
+
+class DisplayFieldInline(admin.StackedInline):
+    model = DisplayField
+    extra = 0
+    suit_classes = 'suit-tab suit-tab-display'
+
+
+class FilterFieldInline(admin.StackedInline):
+    model = FilterField
+    extra = 0
+    suit_classes = 'suit-tab suit-tab-filter'
 
 
 class StarredFilter(SimpleListFilter):
@@ -26,11 +38,20 @@ class StarredFilter(SimpleListFilter):
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('ajax_starred', 'edit', 'name', 'description', 'root_model', 'created', 'modified', 'user_created', 'download_xlsx', 'copy_report',)
     readonly_fields = ['slug', ]
-    fields = ['name', 'description', 'root_model', 'slug']
     search_fields = ('name', 'description')
     list_filter = (StarredFilter, 'root_model', 'created', 'modified', 'root_model__app_label')
-    list_display_links = []
+    list_display_links = ['name']
     show_save = False
+    inlines = [DisplayFieldInline, FilterFieldInline]
+    suit_form_tabs = (('general', 'General'), ('advanced', 'Advanced Settings'))
+    fieldsets = [
+        (None, {
+            'classes': ('suit-tab', 'suit-tab-general',),
+            'fields': ['slug', 'name', 'description', 'root_model']
+        }),
+    ]
+    suit_form_tabs = (('general', 'General'), ('display', 'Display Fields'),
+                      ('filter', 'Filter Fields'))
 
     class Media:
         js = [
@@ -82,6 +103,8 @@ class ReportAdmin(admin.ModelAdmin):
 
 admin.site.register(Report, ReportAdmin)
 admin.site.register(Format)
+admin.site.register(DisplayField)
+admin.site.register(FilterField)
 
 
 def export_to_report(modeladmin, request, queryset):
