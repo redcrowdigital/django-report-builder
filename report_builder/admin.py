@@ -36,7 +36,7 @@ class StarredFilter(SimpleListFilter):
 
 
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('ajax_starred', 'edit', 'name', 'description', 'root_model', 'created', 'modified', 'user_created', 'download_xlsx', 'copy_report',)
+    list_display = ('ajax_starred', 'edit', 'name', 'description', 'root_model', 'created', 'modified', 'user_created', 'download_xlsx', 'download_csv', 'copy_report',)
     readonly_fields = ['slug', ]
     search_fields = ('name', 'description')
     list_filter = (StarredFilter, 'root_model', 'created', 'modified', 'root_model__app_label')

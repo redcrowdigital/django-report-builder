@@ -396,8 +396,19 @@ class Report(models.Model):
                     getattr(settings, 'STATIC_URL', '/static/'),
                 )
             )
-    download_xlsx.short_description = "Download"
+    download_xlsx.short_description = "Download XLSX"
     download_xlsx.allow_tags = True
+
+    def download_csv(self):
+        return mark_safe(
+            '<a href="{0}"><img style="width: 26px; margin: -6px" src="{1}report_builder/img/download.svg"/></a>'.format(
+                reverse('report_download_file', args=[self.id, 'csv']),
+                getattr(settings, 'STATIC_URL', '/static/'),
+            )
+        )
+    download_csv.short_description = "Download CSV"
+    download_csv.allow_tags = True
+
 
     def copy_report(self):
         return '<a href="{0}"><img style="width: 26px; margin: -6px" src="{1}report_builder/img/copy.svg"/></a>'.format(
